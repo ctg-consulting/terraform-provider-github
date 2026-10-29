@@ -17,7 +17,7 @@ terraform {
   required_providers {
     github = {
       source  = "ctg-consulting/github"
-      version = "6.14.0-ctg.1"
+      version = "6.14.0-ctg.2"
     }
   }
 }

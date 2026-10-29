@@ -172,6 +172,9 @@ func NewProvider(version, commit string) func() *schema.Provider {
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
+				"github_enterprise_team":                                                resourceGithubEnterpriseTeam(),
+				"github_enterprise_team_membership":                                     resourceGithubEnterpriseTeamMembership(),
+				"github_enterprise_team_organizations":                                  resourceGithubEnterpriseTeamOrganizations(),
 				"github_enterprise_actions_permissions":                                 resourceGithubActionsEnterprisePermissions(),
 				"github_actions_environment_secret":                                     resourceGithubActionsEnvironmentSecret(),
 				"github_actions_environment_variable":                                   resourceGithubActionsEnvironmentVariable(),
