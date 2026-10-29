@@ -8,7 +8,7 @@ description: |-
 
 The GitHub Terraform provider is used to interact with GitHub resources either as an authenticated client or anonymously.
 
-!> You **must** add a `required_providers` block to every module that will create resources with this provider. If you do not explicitly require `integrations/github` in a submodule, your Terraform code run may [break in hard-to-troubleshoot ways](https://github.com/integrations/terraform-provider-github/issues/876#issuecomment-1303790559).
+!> You **must** add a `required_providers` block to every module that will create resources with this provider. If you do not explicitly require `ctg-consulting/github` in a submodule, your Terraform code run may [break in hard-to-troubleshoot ways](https://github.com/integrations/terraform-provider-github/issues/876#issuecomment-1303790559).
 
 ## Example Usage
 
@@ -16,8 +16,8 @@ The GitHub Terraform provider is used to interact with GitHub resources either a
 terraform {
   required_providers {
     github = {
-      source  = "integrations/github"
-      version = "~> 6.0"
+      source  = "ctg-consulting/github"
+      version = "6.14.0-ctg.1"
     }
   }
 }
