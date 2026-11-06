@@ -20,3 +20,7 @@ The release flow is as follows:
 1. GitHub Actions will trigger the [release workflow](https://github.com/integrations/terraform-provider-github/actions/workflows/release.yaml).
 
 After the workflow executes successfully, the GitHub release created in the prior step will have the relevant assets available for consumption and the new version will show up in the [Terraform Registry](https://registry.terraform.io/providers/integrations/github/latest).
+
+## CTG signing key
+
+Future releases use the shared organization Actions secrets `TERRAFORM_PROVIDER_GPG_PRIVATE_KEY` and `TERRAFORM_PROVIDER_GPG_PASSPHRASE`, generated and scoped by the `infra-engineering` `github/organizations` unit. Apply that configuration and register its `terraform_provider_signing_public_key` output in Terraform Registry before publishing. Keep the previous public key registered for existing releases. CTG release tags use `v*-ctg.*`.
