@@ -42,6 +42,77 @@ type Organization struct {
 	Login string `json:"login"`
 }
 
+// AppInstallation is the enterprise organization's view of an installed app.
+type AppInstallation struct {
+	ID                  int64  `json:"id"`
+	AppSlug             string `json:"app_slug"`
+	RepositorySelection string `json:"repository_selection"`
+}
+
+func appInstallationsPath(enterprise, organization string) string {
+	return "enterprises/" + url.PathEscape(enterprise) + "/apps/organizations/" + url.PathEscape(organization) + "/installations"
+}
+
+// ListAppInstallations returns all pages. GitHub's enterprise endpoint wraps
+// items in {"value": ...}; accept unwrapped items too for API compatibility.
+func (c *Client) ListAppInstallations(ctx context.Context, enterprise, organization string) ([]AppInstallation, error) {
+	path := appInstallationsPath(enterprise, organization)
+	var result []AppInstallation
+	for page := 1; ; {
+		var rows []json.RawMessage
+		header, err := c.request(ctx, http.MethodGet, fmt.Sprintf("%s?per_page=100&page=%d", path, page), nil, &rows)
+		if err != nil {
+			return nil, err
+		}
+		for _, row := range rows {
+			var envelope struct {
+				Value json.RawMessage `json:"value"`
+			}
+			if err := json.Unmarshal(row, &envelope); err != nil {
+				return nil, err
+			}
+			if len(envelope.Value) != 0 {
+				row = envelope.Value
+			}
+			var item AppInstallation
+			if err := json.Unmarshal(row, &item); err != nil {
+				return nil, err
+			}
+			if item.ID <= 0 || item.AppSlug == "" {
+				return nil, fmt.Errorf("GitHub returned incomplete app installation")
+			}
+			result = append(result, item)
+		}
+		next, err := nextPage(header, page)
+		if err != nil {
+			return nil, err
+		}
+		if next == 0 {
+			return result, nil
+		}
+		page = next
+	}
+}
+
+func (c *Client) InstallApp(ctx context.Context, enterprise, organization, clientID string) (*AppInstallation, error) {
+	var installation AppInstallation
+	_, err := c.request(ctx, http.MethodPost, appInstallationsPath(enterprise, organization), map[string]string{
+		"client_id": clientID, "repository_selection": "all",
+	}, &installation)
+	if err != nil {
+		return nil, err
+	}
+	if installation.ID <= 0 {
+		return nil, fmt.Errorf("GitHub returned incomplete app installation")
+	}
+	return &installation, nil
+}
+
+func (c *Client) UninstallApp(ctx context.Context, enterprise, organization string, installationID int64) error {
+	_, err := c.request(ctx, http.MethodDelete, fmt.Sprintf("%s/%d", appInstallationsPath(enterprise, organization), installationID), nil, nil)
+	return err
+}
+
 // APIError deliberately excludes response bodies and request headers. GitHub
 // error bodies can echo user input; diagnostics must never expose credentials.
 type APIError struct {
