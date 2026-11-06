@@ -32,5 +32,12 @@ key in `signing-key.asc` and published through the Terraform Registry.
 Run `go test ./... -skip '^TestAcc'` for unit tests. The focused regression test is
 `go test ./github -run TestBusinessTeamRulesetBypass`.
 
+Merges into `ctg` run the release workflow. After tests pass, it increments
+the `-ctg.N` suffix of the latest CTG release tag and publishes the signed
+provider release in the same job. Rerunning a failed release reuses the tag
+already on that commit. A manually pushed `v*-ctg.*` tag also runs the release
+workflow. When the fork takes a new upstream base version, publish its first
+CTG tag explicitly; subsequent merges increment that base version's suffix.
+
 The `ctg` branch carries CTG changes; `main` tracks the upstream baseline.
 Upstream documentation is retained in `docs/`.
