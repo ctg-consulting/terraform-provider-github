@@ -181,6 +181,7 @@ func NewProvider(version, commit string) func() *schema.Provider {
 				"github_actions_environment_secret":                                     resourceGithubActionsEnvironmentSecret(),
 				"github_actions_environment_variable":                                   resourceGithubActionsEnvironmentVariable(),
 				"github_actions_organization_oidc_subject_claim_customization_template": resourceGithubActionsOrganizationOIDCSubjectClaimCustomizationTemplate(),
+				"github_organization_actions_event_policy":                              resourceGithubOrganizationActionsEventPolicy(),
 				"github_actions_organization_permissions":                               resourceGithubActionsOrganizationPermissions(),
 				"github_actions_organization_secret":                                    resourceGithubActionsOrganizationSecret(),
 				"github_actions_organization_secret_repositories":                       resourceGithubActionsOrganizationSecretRepositories(),
