@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/google/go-github/v92/github"
@@ -119,7 +120,7 @@ func readOrganizationActionsEventPolicy(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 	var scope github.RepositoryRulesetRepositoryPropertyConditionParameters
-	if len(policy.Conditions) != 1 || json.Unmarshal(policy.Conditions["repository_property"], &scope) != nil ||
+	if !hasOnlyVisibilityAndAllWorkflowPaths(policy.Conditions) || json.Unmarshal(policy.Conditions["repository_property"], &scope) != nil ||
 		len(scope.Exclude) != 0 || len(scope.Include) != 1 || scope.Include[0] == nil ||
 		scope.Include[0].Name != "visibility" || scope.Include[0].Source == nil || *scope.Include[0].Source != "system" ||
 		len(scope.Include[0].PropertyValues) != 1 || len(policy.Rules) != 1 ||
@@ -136,6 +137,19 @@ func readOrganizationActionsEventPolicy(ctx context.Context, d *schema.ResourceD
 		}
 	}
 	return nil
+}
+
+// GitHub adds an unrestricted workflow path condition to the stored policy.
+func hasOnlyVisibilityAndAllWorkflowPaths(conditions map[string]json.RawMessage) bool {
+	if len(conditions) == 1 {
+		return true
+	}
+	if len(conditions) != 2 {
+		return false
+	}
+	var paths github.RepositoryRulesetRefConditionParameters
+	return json.Unmarshal(conditions["workflow_path"], &paths) == nil &&
+		slices.Equal(paths.Include, []string{"~ALL"}) && len(paths.Exclude) == 0
 }
 
 func deleteOrganizationActionsEventPolicy(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
