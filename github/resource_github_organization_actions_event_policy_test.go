@@ -54,7 +54,14 @@ func TestOrganizationActionsEventPolicyLifecycle(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		if err := json.NewEncoder(w).Encode(policy); err != nil {
+		response := policy
+		if r.Method == http.MethodGet {
+			response.Conditions = map[string]json.RawMessage{
+				"repository_property": policy.Conditions["repository_property"],
+				"workflow_path":       json.RawMessage(`{"include":["~ALL"],"exclude":[]}`),
+			}
+		}
+		if err := json.NewEncoder(w).Encode(response); err != nil {
 			t.Error(err)
 		}
 	}))
@@ -93,5 +100,29 @@ func TestOrganizationActionsEventPolicyLifecycle(t *testing.T) {
 	}
 	if ds := resource.ReadContext(ctx, imported, owner); ds.HasError() || imported.Id() != "" {
 		t.Fatalf("deleted policy remained in state: ID %q, diagnostics %v", imported.Id(), ds)
+	}
+}
+
+func TestOrganizationActionsEventPolicyWorkflowPath(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		extra map[string]json.RawMessage
+		want  bool
+	}{
+		{name: "omitted", want: true},
+		{name: "default", extra: map[string]json.RawMessage{"workflow_path": json.RawMessage(`{"include":["~ALL"],"exclude":[]}`)}, want: true},
+		{name: "narrowed", extra: map[string]json.RawMessage{"workflow_path": json.RawMessage(`{"include":[".github/workflows/ci.yml"],"exclude":[]}`)}},
+		{name: "excluded", extra: map[string]json.RawMessage{"workflow_path": json.RawMessage(`{"include":["~ALL"],"exclude":[".github/workflows/ci.yml"]}`)}},
+		{name: "unknown condition", extra: map[string]json.RawMessage{"repository_name": json.RawMessage(`{}`)}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			conditions := map[string]json.RawMessage{"repository_property": json.RawMessage(`{}`)}
+			for key, value := range test.extra {
+				conditions[key] = value
+			}
+			if got := hasOnlyVisibilityAndAllWorkflowPaths(conditions); got != test.want {
+				t.Fatalf("hasOnlyVisibilityAndAllWorkflowPaths() = %t, want %t", got, test.want)
+			}
+		})
 	}
 }
